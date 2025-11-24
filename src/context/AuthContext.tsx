@@ -5,7 +5,8 @@ import {
   User, 
   onAuthStateChanged,
   signInWithEmailAndPassword,
-  signOut as firebaseSignOut
+  signOut as firebaseSignOut,
+  AuthError
 } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 
@@ -39,7 +40,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      // Cast to AuthError to get proper error codes
+      const authError = error as AuthError;
+      
+      // Re-throw with a clean error message
+      switch (authError.code) {
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+        case 'auth/invalid-login-credentials':
+          throw new Error('INVALID_PASSWORD');
+        case 'auth/user-not-found':
+          throw new Error('USER_NOT_FOUND');
+        case 'auth/too-many-requests':
+          throw new Error('TOO_MANY_ATTEMPTS');
+        default:
+          throw new Error('AUTH_FAILED');
+      }
+    }
   };
 
   const signOut = async () => {

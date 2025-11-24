@@ -22,13 +22,35 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // Sign in with fixed email and user-provided password
       await signIn(ADMIN_EMAIL, password);
       router.push('/voting');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      setError('Invalid password. Please try again.');
+      
+      // Check if it's a Firebase Auth error with a code
+      if (err && typeof err === 'object' && 'code' in err) {
+        const errorCode = (err as { code: string }).code;
+        
+        switch (errorCode) {
+          case 'auth/wrong-password':
+          case 'auth/invalid-credential':
+            setError('Invalid password. Please try again.');
+            break;
+          case 'auth/user-not-found':
+            setError('Admin account not found. Please contact support.');
+            break;
+          case 'auth/too-many-requests':
+            setError('Too many failed attempts. Please try again later.');
+            break;
+          case 'auth/invalid-email':
+            setError('Invalid email configuration. Please contact support.');
+            break;
+          default:
+            setError('Login failed. Please try again.');
+        }
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -106,7 +128,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="mb-6 bg- border-2 border-red-400 text-red-700 px-4 py-3 rounded-lg animate-shake">
+              <div className="mb-6 bg-red-50 border-2 border-red-400 text-red-700 px-4 py-3 rounded-lg animate-shake">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">⚠️</span>
                   <p className="font-semibold">{error}</p>
@@ -122,33 +144,32 @@ export default function LoginPage() {
                 >
                   Password
                 </label>
-    <input
-  id="password"
-  type="password"
-  required
-  value={password}
-  onChange={(e) => setPassword(e.target.value)}
-  placeholder="Enter admin password"
-  autoFocus
-  style={{
-    width: '100%',
-    padding: '0.75rem 1rem',
-    border: '3px solid #0085BB',  // ✅ Thicker blue border
-    borderRadius: '0.75rem',
-    fontSize: '1.125rem',
-    outline: 'none',
-    transition: 'all 0.2s',
-    backgroundColor: '#F0F9FF',  // ✅ Light blue background
-    color: '#033E78',  // ✅ Dark blue text color
-    fontWeight: '600',
-  }}
-
-  onBlur={(e) => {
-    e.target.style.borderColor = '#0085BB';
-    e.target.style.backgroundColor = '#F0F9FF';
-    e.target.style.boxShadow = 'none';
-  }}
-/>
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter admin password"
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    border: '3px solid #0085BB',
+                    borderRadius: '0.75rem',
+                    fontSize: '1.125rem',
+                    outline: 'none',
+                    transition: 'all 0.2s',
+                    backgroundColor: '#F0F9FF',
+                    color: '#033E78',
+                    fontWeight: '600',
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#0085BB';
+                    e.target.style.backgroundColor = '#F0F9FF';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
               </div>
 
               <button
