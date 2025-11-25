@@ -31,13 +31,13 @@ const RESOLUTION_TITLES = [
   'Amendment of Article II, Section 4 - Notice of Meeting (changing from 1 week to 21 days prior notice)',
   'Amendment of Article II, Section 5 - Quorum (remote participation deemed present)',
   'Amendment of Article II, Section 6 - Conduct of Meeting (detailed remote participation procedures)',
-  'Amendment of Article II, Section 7 - Manner of Voting (proxy deadline changed from 1 day to 7 days prior)',
   'Amendment of Article III, Section 8 - Qualification of Director (changing from 10 to 15 common shares per block)',
+    'Amendment of Article II, Section 7 - Manner of Voting (proxy deadline changed from 1 day to 7 days prior)',
   'Election of QUILAB and GARSUTA, CPAs as External Auditor for the Current Year and Fixing of its Remuneration',
   'Election of the 2025 Board of Directors',
 ];
 
-const RESOLUTION_NUMBERS = ['01', '03', '04', '07', '07', '08', '08', '08', '08', '09', '08', '10', '13'];
+const RESOLUTION_NUMBERS = ['NO : 01', 'NO : 02', 'NO : 03', 'NO : 07', 'NO : 07', 'NO : 08', 'NO : 08', 'NO : 08', 'NO : 08',  'NO : 08','NO : 09', 'NO : 10', ''];
 
 interface DirectorVotes {
   name: string;
@@ -445,7 +445,7 @@ export default function VotingResults() {
                       <div className="bg-gradient-to-r from-[#033E78] to-[#0085BB] text-white px-6 sm:px-8 py-4 rounded-xl font-black text-base sm:text-lg shadow-lg flex-shrink-0 xl:w-56">
                         <div className="flex items-center gap-2">
                           <span className="text-2xl">📄</span>
-                          <span>RESOLUTION NO: {resolution.number}</span>
+                          <span>RESOLUTION  {resolution.number}</span>
                         </div>
                       </div>
 
