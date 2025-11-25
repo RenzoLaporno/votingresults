@@ -21,7 +21,6 @@ const DIRECTOR_NAMES = {
 };
 
 // Resolution titles mapping
-// Resolution titles mapping
 const RESOLUTION_TITLES = [
   "Approval of the Minutes of the 26 January 2025 Annual Stockholders' Meeting",
   'Noting and Approval of the 2024 Annual Report and Audited Financial Statement as of 31 December 2024',
@@ -35,10 +34,10 @@ const RESOLUTION_TITLES = [
   'Amendment of Article II, Section 7 - Manner of Voting (proxy deadline changed from 1 day to 7 days prior)',
   'Amendment of Article III, Section 8 - Qualification of Director (changing from 10 to 15 common shares per block)',
   'Election of QUILAB and GARSUTA, CPAs as External Auditor for the Current Year and Fixing of its Remuneration',
-  'Election of the 2025 Board of Directors', // ✅ ADDED RESOLUTION 13
+  'Election of the 2025 Board of Directors',
 ];
 
-const RESOLUTION_NUMBERS = ['01', '03', '04', '07', '07', '08', '08', '08', '08', '09', '08', '10', '13']; // ✅ ADDED '13'
+const RESOLUTION_NUMBERS = ['01', '03', '04', '07', '07', '08', '08', '08', '08', '09', '08', '10', '13'];
 
 interface DirectorVotes {
   name: string;
@@ -57,8 +56,10 @@ interface ResolutionResult {
 export default function VotingResults() {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentDateTime, setCurrentDateTime] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPopup, setShowPopup] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Results data
   const [regularDirectors, setRegularDirectors] = useState<DirectorVotes[]>([]);
@@ -91,135 +92,125 @@ export default function VotingResults() {
   }, []);
 
   // Fetch and calculate voting data
-  useEffect(() => {
-    const fetchVotingData = async () => {
-      try {
-        setLoading(true);
+  const generateResults = async () => {
+    try {
+      setIsGenerating(true);
+      setLoading(true);
 
-        // Fetch all documents from pmc2026
-        const querySnapshot = await getDocs(collection(db, 'pmc2026'));
-        const allData: VotingData[] = [];
+      // Fetch all documents from pmc2026
+      const querySnapshot = await getDocs(collection(db, 'pmc2026'));
+      const allData: VotingData[] = [];
 
-        querySnapshot.forEach((doc) => {
-          allData.push({ ...doc.data() as VotingData, email: doc.id });
-        });
+      querySnapshot.forEach((doc) => {
+        allData.push({ ...doc.data() as VotingData, email: doc.id });
+      });
 
-        console.log(`📊 Total documents fetched: ${allData.length}`);
+      console.log(`📊 Total documents fetched: ${allData.length}`);
 
-        // Filter only users who have BOTH ratified AND voted
-        const votedUsers = allData.filter(
-          (user) => user.hasRatified === true && user.hasVoted === true
-        );
+      // Filter only users who have BOTH ratified AND voted
+      const votedUsers = allData.filter(
+        (user) => user.hasRatified === true && user.hasVoted === true
+      );
 
-        console.log(`✅ Users who voted: ${votedUsers.length}`);
-        setTotalVoters(votedUsers.length);
+      console.log(`✅ Users who voted: ${votedUsers.length}`);
+      setTotalVoters(votedUsers.length);
 
-        // Calculate Director Votes
-        const directorTotals = {
-          vote1: 0,
-          vote2: 0,
-          vote3: 0,
-          vote4: 0,
-          vote5: 0,
-          vote6: 0,
-          vote7: 0,
-          vote8: 0,
-          independent1: 0,
-          independent2: 0,
-        };
+      // Calculate Director Votes
+      const directorTotals = {
+        vote1: 0,
+        vote2: 0,
+        vote3: 0,
+        vote4: 0,
+        vote5: 0,
+        vote6: 0,
+        vote7: 0,
+        vote8: 0,
+        independent1: 0,
+        independent2: 0,
+      };
+
+      votedUsers.forEach((user) => {
+        directorTotals.vote1 += user.vote1 || 0;
+        directorTotals.vote2 += user.vote2 || 0;
+        directorTotals.vote3 += user.vote3 || 0;
+        directorTotals.vote4 += user.vote4 || 0;
+        directorTotals.vote5 += user.vote5 || 0;
+        directorTotals.vote6 += user.vote6 || 0;
+        directorTotals.vote7 += user.vote7 || 0;
+        directorTotals.vote8 += user.vote8 || 0;
+        directorTotals.independent1 += user.independent1 || 0;
+        directorTotals.independent2 += user.independent2 || 0;
+      });
+
+      // Format Regular Directors
+      const regularDirs: DirectorVotes[] = [
+        { name: DIRECTOR_NAMES.vote1, votes: directorTotals.vote1 },
+        { name: DIRECTOR_NAMES.vote2, votes: directorTotals.vote2 },
+        { name: DIRECTOR_NAMES.vote3, votes: directorTotals.vote3 },
+        { name: DIRECTOR_NAMES.vote4, votes: directorTotals.vote4 },
+        { name: DIRECTOR_NAMES.vote5, votes: directorTotals.vote5 },
+        { name: DIRECTOR_NAMES.vote6, votes: directorTotals.vote6 },
+        { name: DIRECTOR_NAMES.vote7, votes: directorTotals.vote7 },
+        { name: DIRECTOR_NAMES.vote8, votes: directorTotals.vote8 },
+      ];
+
+      // Format Independent Directors
+      const independentDirs: DirectorVotes[] = [
+        { name: DIRECTOR_NAMES.independent1, votes: directorTotals.independent1 },
+        { name: DIRECTOR_NAMES.independent2, votes: directorTotals.independent2 },
+      ];
+
+      setRegularDirectors(regularDirs);
+      setIndependentDirectors(independentDirs);
+
+      // Calculate Resolution Results
+      const resolutionResults: ResolutionResult[] = [];
+
+      for (let i = 1; i <= 13; i++) {
+        const selectionKey = `selection${i}` as keyof VotingData;
+        let forCount = 0;
+        let againstCount = 0;
+        let abstainCount = 0;
 
         votedUsers.forEach((user) => {
-          directorTotals.vote1 += user.vote1 || 0;
-          directorTotals.vote2 += user.vote2 || 0;
-          directorTotals.vote3 += user.vote3 || 0;
-          directorTotals.vote4 += user.vote4 || 0;
-          directorTotals.vote5 += user.vote5 || 0;
-          directorTotals.vote6 += user.vote6 || 0;
-          directorTotals.vote7 += user.vote7 || 0;
-          directorTotals.vote8 += user.vote8 || 0;
-          directorTotals.independent1 += user.independent1 || 0;
-          directorTotals.independent2 += user.independent2 || 0;
+          const selection = user[selectionKey];
+          if (selection === 'For') forCount++;
+          else if (selection === 'Against') againstCount++;
+          else if (selection === 'Abstain') abstainCount++;
         });
 
-        // Format Regular Directors
-        const regularDirs: DirectorVotes[] = [
-          { name: DIRECTOR_NAMES.vote1, votes: directorTotals.vote1 },
-          { name: DIRECTOR_NAMES.vote2, votes: directorTotals.vote2 },
-          { name: DIRECTOR_NAMES.vote3, votes: directorTotals.vote3 },
-          { name: DIRECTOR_NAMES.vote4, votes: directorTotals.vote4 },
-          { name: DIRECTOR_NAMES.vote5, votes: directorTotals.vote5 },
-          { name: DIRECTOR_NAMES.vote6, votes: directorTotals.vote6 },
-          { name: DIRECTOR_NAMES.vote7, votes: directorTotals.vote7 },
-          { name: DIRECTOR_NAMES.vote8, votes: directorTotals.vote8 },
-        ];
+        const total = forCount + againstCount + abstainCount;
 
-        // Format Independent Directors
-        const independentDirs: DirectorVotes[] = [
-          { name: DIRECTOR_NAMES.independent1, votes: directorTotals.independent1 },
-          { name: DIRECTOR_NAMES.independent2, votes: directorTotals.independent2 },
-        ];
-
-        setRegularDirectors(regularDirs);
-        setIndependentDirectors(independentDirs);
-
-        // Calculate Resolution Results
-        const resolutionResults: ResolutionResult[] = [];
-
-        for (let i = 1; i <= 13; i++) {
-          const selectionKey = `selection${i}` as keyof VotingData;
-          let forCount = 0;
-          let againstCount = 0;
-          let abstainCount = 0;
-
-          votedUsers.forEach((user) => {
-            const selection = user[selectionKey];
-            if (selection === 'For') forCount++;
-            else if (selection === 'Against') againstCount++;
-            else if (selection === 'Abstain') abstainCount++;
-          });
-
-          const total = forCount + againstCount + abstainCount;
-
-          resolutionResults.push({
-            number: RESOLUTION_NUMBERS[i - 1],
-            title: RESOLUTION_TITLES[i - 1],
-            for: forCount,
-            against: againstCount,
-            abstain: abstainCount,
-            total: total,
-          });
-        }
-
-        setResolutions(resolutionResults);
-        console.log('✅ Data calculation complete');
-        
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (err: any) {
-        console.error('❌ Error fetching voting data:', err);
-        setError(err.message || 'Failed to fetch voting data');
-      } finally {
-        setLoading(false);
+        resolutionResults.push({
+          number: RESOLUTION_NUMBERS[i - 1],
+          title: RESOLUTION_TITLES[i - 1],
+          for: forCount,
+          against: againstCount,
+          abstain: abstainCount,
+          total: total,
+        });
       }
-    };
 
-    fetchVotingData();
-  }, []);
+      setResolutions(resolutionResults);
+      console.log('✅ Data calculation complete');
+      
+      // Close popup and show results
+      setShowPopup(false);
+      
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      console.error('❌ Error fetching voting data:', err);
+      setError(err.message || 'Failed to fetch voting data');
+    } finally {
+      setLoading(false);
+      setIsGenerating(false);
+    }
+  };
 
   // Format number with commas
   const formatNumber = (num: number): string => {
     return num.toLocaleString('en-US', { minimumIntegerDigits: 1 });
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#033E78] to-[#0085BB]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-white mx-auto mb-4"></div>
-          <p className="text-white text-2xl font-bold">Loading Results...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -234,6 +225,47 @@ export default function VotingResults() {
 
   return (
     <div className="min-h-screen relative p-4 sm:p-6 lg:p-8">
+      {/* Generate Results Popup */}
+      {showPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl p-8 sm:p-12 max-w-md w-full mx-4 transform transition-all">
+            <div className="text-center">
+              <div className="mb-6">
+                <div className="mx-auto w-20 h-20 bg-gradient-to-r from-[#033E78] to-[#0085BB] rounded-full flex items-center justify-center">
+                  <span className="text-4xl">📊</span>
+                </div>
+              </div>
+              
+              <h2 className="text-3xl font-black text-[#033E78] mb-4">
+                Ready to Generate Results?
+              </h2>
+              
+              <p className="text-gray-600 mb-8 text-lg">
+                Click the button below to calculate and display the voting results
+              </p>
+              
+              <button
+                onClick={generateResults}
+                disabled={isGenerating}
+                className="w-full bg-gradient-to-r from-[#033E78] to-[#0085BB] text-white px-8 py-4 rounded-xl font-bold text-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 active:scale-95"
+              >
+                {isGenerating ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Generating...
+                  </span>
+                ) : (
+                  '🚀 Generate Results'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Background Image with Overlay */}
       <div className="fixed inset-0 z-0">
         <div
@@ -332,7 +364,14 @@ export default function VotingResults() {
 
           {/* Content Area */}
           <div className="px-6 sm:px-8 lg:px-12 py-8 sm:py-10 lg:py-12">
-            {currentPage === 1 ? (
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#033E78] mx-auto mb-4"></div>
+                  <p className="text-[#033E78] text-xl font-bold">Calculating results...</p>
+                </div>
+              </div>
+            ) : currentPage === 1 ? (
               // VOTING RESULTS PAGE
               <div className="space-y-12">
                 {/* REGULAR DIRECTOR Section */}
