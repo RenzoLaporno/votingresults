@@ -92,7 +92,7 @@ const handleSubmit = async (e: FormEvent) => {
 
               {/* Title */}
               <h1 className="text-[#033E78] text-2xl font-black text-center tracking-tight">
-                PREMIER MEDICAL CENTER
+                ALLIED CARE EXPERTS MEDICAL CENTER
               </h1>
               <h2 className="text-[#0085BB] text-xl font-semibold text-center">
                 ZAMBOANGA
