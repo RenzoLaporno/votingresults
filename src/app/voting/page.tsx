@@ -238,6 +238,18 @@ export default function VotingResults() {
       setIsExporting(true);
       const XLSX = await import('xlsx');
 
+      // Fetch voter data for the voters list
+      const querySnapshot = await getDocs(collection(db, 'pmc2026'));
+      const allData: VotingData[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        allData.push({ ...doc.data() as VotingData, email: doc.id });
+      });
+
+      const votedUsers = allData.filter(
+        (user) => user.hasRatified === true && user.hasVoted === true
+      );
+
       // Create workbook
       const wb = XLSX.utils.book_new();
 
@@ -254,6 +266,20 @@ export default function VotingResults() {
       ];
       const statsWs = XLSX.utils.aoa_to_sheet(statsData);
       XLSX.utils.book_append_sheet(wb, statsWs, 'Statistics');
+
+      // Voters List Sheet
+      const votersData = [
+        ['VOTERS LIST'],
+        ['Email', 'Name', 'Shares', 'Max Votes'],
+        ...votedUsers.map((user) => [
+          user.email,
+          user.name,
+          user.shares,
+          user.maxVotes,
+        ]),
+      ];
+      const votersWs = XLSX.utils.aoa_to_sheet(votersData);
+      XLSX.utils.book_append_sheet(wb, votersWs, 'Voters List');
 
       // Regular Directors Sheet
       const regularData = [
@@ -299,6 +325,18 @@ export default function VotingResults() {
       const jsPDF = (await import('jspdf')).default;
       const autoTable = (await import('jspdf-autotable')).default;
 
+      // Fetch voter data for the voters list
+      const querySnapshot = await getDocs(collection(db, 'pmc2026'));
+      const allData: VotingData[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        allData.push({ ...doc.data() as VotingData, email: doc.id });
+      });
+
+      const votedUsers = allData.filter(
+        (user) => user.hasRatified === true && user.hasVoted === true
+      );
+
       const doc = new jsPDF();
       let yPosition = 20;
 
@@ -335,6 +373,39 @@ export default function VotingResults() {
       yPosition += 5;
       doc.text(`Total Max Votes: ${formatNumber(totalMaxVotes)}`, 14, yPosition);
       yPosition += 10;
+
+      // Voters List Table
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('VOTERS LIST', 14, yPosition);
+      yPosition += 5;
+
+      autoTable(doc, {
+        startY: yPosition,
+        head: [['Email', 'Name', 'Shares', 'Max Votes']],
+        body: votedUsers.map((user) => [
+          user.email,
+          user.name,
+          user.shares.toString(),
+          user.maxVotes,
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [3, 62, 120] },
+        styles: { fontSize: 8 },
+        columnStyles: {
+          0: { cellWidth: 50 },
+          1: { cellWidth: 50 },
+        },
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      yPosition = (doc as any).lastAutoTable.finalY + 10;
+
+      // Check if we need a new page
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 20;
+      }
 
       // Regular Directors Table
       doc.setFontSize(12);
