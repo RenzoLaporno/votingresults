@@ -87,7 +87,7 @@ export default function LoginPage() {
               <div className="relative w-24 h-24 mb-4 bg-white rounded-full p-2 shadow-xl ring-4 ring-[#0085BB]/30">
                 <div className="w-full h-full relative">
                   <Image
-                    src="/logo.webp"
+                    src="/logo-removebg-preview.png"
                     alt="PMC Logo"
                     fill
                     className="object-contain"
@@ -203,7 +203,7 @@ export default function LoginPage() {
         {/* Footer */}
         <div className="mt-6 text-center">
           <p className="text-white/90 text-sm font-semibold drop-shadow-lg">
-            © 2025 Premier Medical Center Zamboanga
+            © 2025 ALLIED CARE EXPERTS MEDICAL CENTER
           </p>
         </div>
       </div>

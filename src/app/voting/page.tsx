@@ -255,7 +255,7 @@ export default function VotingResults() {
 
       // Statistics Sheet
       const statsData = [
-        ['PREMIER MEDICAL CENTER ZAMBOANGA'],
+        ['ALLIED CARE EXPERTS MEDICAL CENTER'],
         ['2025 Annual Stockholders Meeting - Voting Results'],
         ['Generated:', currentDateTime],
         [],
@@ -343,7 +343,7 @@ export default function VotingResults() {
       // Title
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('PREMIER MEDICAL CENTER ZAMBOANGA', 105, yPosition, { align: 'center' });
+      doc.text('ALLIED CARE EXPERTS MEDICAL CENTER ZAMBOANGA', 105, yPosition, { align: 'center' });
       yPosition += 8;
 
       doc.setFontSize(14);
@@ -499,7 +499,7 @@ export default function VotingResults() {
                 <div className="relative mx-auto w-24 h-24 bg-white rounded-full p-2 shadow-xl ring-4 ring-[#E2B016]">
                   <div className="w-full h-full relative">
                     <Image
-                      src="/logo.webp"
+                      src="/logo-removebg-preview.png"
                       alt="PMC Logo"
                       fill
                       className="object-contain"
@@ -626,7 +626,7 @@ export default function VotingResults() {
                 <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-white rounded-full p-1 shadow-xl ring-4 ring-[#0085BB]/50">
                   <div className="w-full h-full relative">
                     <Image
-                      src="/logo.webp"
+                      src="/logo-removebg-preview.png"
                       alt="PMC Logo"
                       fill
                       className="object-contain"
@@ -639,7 +639,7 @@ export default function VotingResults() {
 
                 <div>
                   <h1 className="text-white text-lg sm:text-xl lg:text-2xl font-black tracking-tight uppercase">
-                    PREMIER MEDICAL CENTER
+                    ALLIED CARE EXPERTS MEDICAL CENTER
                   </h1>
                   <h2 className="text-[#E2B016] text-base sm:text-lg lg:text-xl font-bold uppercase">
                     ZAMBOANGA
@@ -850,7 +850,7 @@ export default function VotingResults() {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-white/90 text-sm font-semibold drop-shadow-lg">
-            © 2025 Premier Medical Center Zamboanga. All rights reserved.
+            © 2025 ALLIED CARE EXPERTS MEDICAL CENTER. All rights reserved.
           </p>
         </div>
       </div>
