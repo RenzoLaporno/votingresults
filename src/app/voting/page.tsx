@@ -194,9 +194,15 @@ export default function VotingResults() {
 
         votedUsers.forEach((user) => {
           const selection = user[selectionKey];
-          if (selection === 'For') forCount++;
-          else if (selection === 'Against') againstCount++;
-          else if (selection === 'Abstain') abstainCount++;
+          const userMaxVotes = (user.shares) || 0; // Get the user's max votes
+          
+          if (selection === 'For') {
+            forCount += userMaxVotes; // Add their max votes instead of 1
+          } else if (selection === 'Against') {
+            againstCount += userMaxVotes; // Add their max votes instead of 1
+          } else if (selection === 'Abstain') {
+            abstainCount += userMaxVotes; // Add their max votes instead of 1
+          }
         });
 
         const total = forCount + againstCount + abstainCount;
